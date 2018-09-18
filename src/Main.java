@@ -1,5 +1,3 @@
-import com.sun.deploy.util.ArrayUtil;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -8,24 +6,34 @@ import java.util.Arrays;
 import java.util.PriorityQueue;
 
 public class Main {
+
+    static ArrayList<ArrayList<Integer>> arList;
+    static PriorityQueue<VandD> pQueue;
+    static int[] parent;
+    static int[][] p;
+    static int[] dist;
+
+    static int minDist;
+
     public static void main(String[] args) throws IOException {
-        System.out.println("Test");
 
         int N, M, S, D, U, V, P;
-        ArrayList<ArrayList<Integer>> arList = new ArrayList<ArrayList<Integer>>();
-        PriorityQueue<VandD> pQueue = new PriorityQueue<VandD>();
-        int[] parent;
-        int[][] p;
-        int[] dist;
+
         String[] strs;
 
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+
         while(true) {
-            BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+
+            arList = new ArrayList<ArrayList<Integer>>();
+            pQueue = new PriorityQueue<VandD>();
 
             strs = br.readLine().split(" ");
 
             N = Integer.parseInt(strs[0]);
             M = Integer.parseInt(strs[1]);
+
+//            System.out.println("N : " + N + ", M : " + M);
 
             if (N == 0 && M == 0) {
                 break;
@@ -39,12 +47,16 @@ public class Main {
             p = new int[N][N];
             dist = new int[N];
 
+            minDist = Integer.MAX_VALUE;
+
             Arrays.fill(dist, Integer.MAX_VALUE);
 
             strs = br.readLine().split(" ");
 
             S = Integer.parseInt(strs[0]);
             D = Integer.parseInt(strs[1]);
+
+//            System.out.println("S : " + S + ", D : " + D);
 
             dist[S] = 0;
 
@@ -53,33 +65,88 @@ public class Main {
 
                 U = Integer.parseInt(strs[0]);
                 V = Integer.parseInt(strs[1]);
-                P = Integer.parseInt(strs[1]);
+                P = Integer.parseInt(strs[2]);
 
                 p[U][V] = P;
 
                 arList.get(U).add(V);
             }
 
-            pQueue.add(new VandD(S, dist[S]));
+            while(true) {
+                Dijkstra(S);
 
-            while (pQueue.isEmpty()) {
-                VandD vd;
-                vd = pQueue.peek();
-                pQueue.poll();
+//                System.out.println(dist[D]);
 
-                int v = vd.v;
-                int d = vd.d;
-
-                for (int i = 0; i < arList.get(v).size(); i++) {
-                    int nextV = arList.get(v).get(i);
-
-                    if (d != Integer.MAX_VALUE && d + p[v][nextV] < dist[nextV]) {
-                        dist[nextV] = d + p[v][nextV];
-                        pQueue.add(new VandD(nextV, dist[nextV]));
-                        parent[nextV] = v;
+                if (minDist > dist[D]) {
+                    minDist = dist[D];
+                } else if (minDist < dist[D]) {
+                    if (dist[D] != Integer.MAX_VALUE) {
+                        minDist = dist[D];
+                    } else {
+                        minDist = -1;
                     }
+
+                    break;
+                }
+
+                removeMinPath(D);
+
+                Arrays.fill(parent, 0);
+                Arrays.fill(dist, Integer.MAX_VALUE);
+                dist[S] = 0;
+            }
+
+            System.out.println(minDist);
+        }
+    }
+
+    static void Dijkstra(int s) {
+        pQueue.add(new VandD(s, dist[s]));
+
+        while (false == pQueue.isEmpty()) {
+            VandD vd;
+            vd = pQueue.peek();
+            pQueue.poll();
+
+            int v = vd.v;
+            int d = vd.d;
+
+//            System.out.println("v : " + v + ", d : " + d);
+
+            for (int i = 0; i < arList.get(v).size(); i++) {
+                int nextV = arList.get(v).get(i);
+//                System.out.println("nextV : " + nextV);
+                if (d != Integer.MAX_VALUE && d + p[v][nextV] < dist[nextV]) {
+                    dist[nextV] = d + p[v][nextV];
+//                    System.out.println(nextV + ": dist = " + dist[nextV]);
+
+                    pQueue.add(new VandD(nextV, dist[nextV]));
+                    parent[nextV] = v + 1;
                 }
             }
+        }
+    }
+
+    static void removeMinPath(int d) {
+        int child = d;
+
+        while(true) {
+            if (parent[child] > 0) {
+                for (int j = 0; j < arList.get(parent[child] - 1).size(); j++) {
+                    if (arList.get(parent[child] - 1).get(j) == child) {
+//                        System.out.println(child + "'s parent : " + (parent[child] - 1));
+                        arList.get(parent[child] - 1).remove(j);
+
+                        child = parent[child] - 1;
+//                        System.out.println("new child : " + child);
+                        break;
+                    }
+                }
+
+                continue;
+            }
+
+            break;
         }
     }
 }
