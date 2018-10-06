@@ -1,23 +1,22 @@
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.PriorityQueue;
+import java.util.*;
 
 public class Main {
 
-    static ArrayList<ArrayList<Integer>> arList;
+    static int[][] ar;
     static PriorityQueue<VandD> pQueue;
     static int[] parent;
     static int[][] p;
     static int[] dist;
+    static ArrayList<Integer> childs;
 
     static int minDist;
 
-    public static void main(String[] args) throws IOException {
+    static int N, M, S, D, U, V, P;
 
-        int N, M, S, D, U, V, P;
+    public static void main(String[] args) throws IOException {
 
         String[] strs;
 
@@ -25,7 +24,6 @@ public class Main {
 
         while(true) {
 
-            arList = new ArrayList<ArrayList<Integer>>();
             pQueue = new PriorityQueue<VandD>();
 
             strs = br.readLine().split(" ");
@@ -33,17 +31,15 @@ public class Main {
             N = Integer.parseInt(strs[0]);
             M = Integer.parseInt(strs[1]);
 
+            ar = new int[N][N];
 //            System.out.println("N : " + N + ", M : " + M);
 
             if (N == 0 && M == 0) {
                 break;
             }
 
-            for (int i = 0; i < N; i++) {
-                arList.add(new ArrayList<Integer>());
-            }
-
             parent = new int[N];
+            childs = new ArrayList<Integer>();
             p = new int[N][N];
             dist = new int[N];
 
@@ -69,35 +65,30 @@ public class Main {
 
                 p[U][V] = P;
 
-                arList.get(U).add(V);
-            }
+                ar[U][V] = 1;
 
-            while(true) {
-                Dijkstra(S);
-
-//                System.out.println(dist[D]);
-
-                if (minDist > dist[D]) {
-                    minDist = dist[D];
-                } else if (minDist < dist[D]) {
-                    if (dist[D] != Integer.MAX_VALUE) {
-                        minDist = dist[D];
-                    } else {
-                        minDist = -1;
-                    }
-
-                    break;
+                if (V == D) {
+                    childs.add(U);
                 }
-
-                removeMinPath(D);
-
-                Arrays.fill(parent, 0);
-                Arrays.fill(dist, Integer.MAX_VALUE);
-                dist[S] = 0;
             }
 
-            System.out.println(minDist);
+            Dijkstra(S);
+
+//            System.out.println("First dist of D : " + dist[D]);
+
+            eraseShortestPath(D);
+
+            Arrays.fill(parent, 0);
+            Arrays.fill(dist, Integer.MAX_VALUE);
+            dist[S] = 0;
+
+//            System.out.println("dist[D] : " + dist[D]);
+
+            Dijkstra(S);
+
+            System.out.println(dist[D] != Integer.MAX_VALUE ? dist[D] : -1);
         }
+
     }
 
     static void Dijkstra(int s) {
@@ -113,10 +104,13 @@ public class Main {
 
 //            System.out.println("v : " + v + ", d : " + d);
 
-            for (int i = 0; i < arList.get(v).size(); i++) {
-                int nextV = arList.get(v).get(i);
+            for (int nextV = 0; nextV < ar[v].length; nextV++) {
+                if (ar[v][nextV] == 0) {
+                    continue;
+                }
 //                System.out.println("nextV : " + nextV);
-                if (d != Integer.MAX_VALUE && d + p[v][nextV] < dist[nextV]) {
+//                System.out.println("p[" + v + "][" + nextV + "] : " + p[v][nextV]);
+                if (d != Integer.MAX_VALUE && d + p[v][nextV] < dist[nextV] && p[v][nextV] != 0) {
                     dist[nextV] = d + p[v][nextV];
 //                    System.out.println(nextV + ": dist = " + dist[nextV]);
 
@@ -127,26 +121,22 @@ public class Main {
         }
     }
 
-    static void removeMinPath(int d) {
-        int child = d;
+    static void eraseShortestPath(int d) {
+        Queue<Integer> q = new LinkedList<Integer>();
 
-        while(true) {
-            if (parent[child] > 0) {
-                for (int j = 0; j < arList.get(parent[child] - 1).size(); j++) {
-                    if (arList.get(parent[child] - 1).get(j) == child) {
-//                        System.out.println(child + "'s parent : " + (parent[child] - 1));
-                        arList.get(parent[child] - 1).remove(j);
+        ((LinkedList<Integer>) q).push(d);
 
-                        child = parent[child] - 1;
-//                        System.out.println("new child : " + child);
-                        break;
-                    }
+        while(q.size() > 0) {
+            int dest = ((LinkedList<Integer>) q).pop();
+
+            for (int i = 0; i < N; i++) {
+//                System.out.println("p[" + i + "][" + dest + "] : " + p[i][dest]);
+                if (dist[dest] == dist[i] + p[i][dest] && p[i][dest] != 0) {
+//                    System.out.println("Erased v (dest : " + dest + ") : " + i);
+                    p[i][dest] = 0;
+                    ((LinkedList<Integer>) q).push(i);
                 }
-
-                continue;
             }
-
-            break;
         }
     }
 }
